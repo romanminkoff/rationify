@@ -1,0 +1,50 @@
+/*
+    NOTE: after each CSS modification, clear cached images and files in browser
+*/
+
+body {
+  margin: 0;
+  font-family: Arial, Helvetica, sans-serif;
+  height: 100%;
+}
+
+/* Style the top navigation bar */
+.topnav {
+  overflow: hidden;
+  background-color: rgb(170, 214, 255);
+}
+
+/* Style the topnav links */
+.topnav a {
+  float: left;
+  display: block;
+  color: black;
+  text-align: center;
+  padding: 14px 16px;
+  text-decoration: none;
+}
+
+/* Change color on hover */
+.topnav a:hover {
+  background-color: rgb(247, 247, 247);
+  color: black;
+}
+
+/* Style the content */
+.content {
+  background-color: rgb(247, 247, 247);
+  padding: 10px;
+  height: 100%; /* Should be removed. Only for demonstration */
+}
+
+/* Style the footer */
+.footer {
+  background-color: #e0e0e0;
+  padding: 10px;
+}
+
+/* */
+.page_header {
+    margin-bottom: 20px;
+    font-weight: bold;
+}
