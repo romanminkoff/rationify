@@ -30,11 +30,19 @@ body {
   color: black;
 }
 
+.nav_profile_name {
+    margin: 0 auto;
+    width: 500px;
+    font-size: 18pt;
+    color: maroon;
+}
+
 /* Style the content */
 .content {
   background-color: rgb(247, 247, 247);
   padding: 10px;
   height: 100%; /* Should be removed. Only for demonstration */
+  font-size: 12pt;
 }
 
 /* Style the footer */
@@ -45,6 +53,7 @@ body {
 
 /* */
 .page_header {
-    margin-bottom: 20px;
-    font-weight: bold;
+  margin-bottom: 20px;
+  font-weight: bold;
+  font-size: 18pt;
 }

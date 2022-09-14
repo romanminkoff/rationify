@@ -3,5 +3,25 @@
 {% block content %}
 
     <div class="page_header">Wellcome</div>
+    
+    <form action="/choose_profile" method="POST">
+        <label for="profile_name">Choose profile:</label>
+        <!--input type="text" name="choose_profile" list="profile_names"-->
+        <select id="profile_name" name="profile_name">
+            {% for profile in profiles  %}
+            <option value="{{profile}}">{{profile}}</option>
+            {% endfor %}
+        </select>
+        <input type="submit" value="Choose profile">
+    </form>
+    <br/><br/>
+    <form action="/create_profile" method="POST">
+        <fieldset>
+            <legend>Create new profile:</legend>
+            <label for="profile">Name:</label>
+            <input type="text" id="profile" name="profile"><br>
+            <input type="submit" id="profile_submit" value="Create profile">
+        </fieldset>
+    </form>
 
 {% endblock %}

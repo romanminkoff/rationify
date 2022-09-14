@@ -1,4 +1,8 @@
+    <a href="{{ url_for('route_index') }}">Log in</a>
     <a href="{{ url_for('route_overview') }}">Overview</a>
     <a href="{{ url_for('route_ration') }}">Ration</a>
     <a href="{{ url_for('route_history') }}">History</a>
     <a href="{{ url_for('route_profile') }}">Profile</a>
+    {% if profile %}
+        <div class="nav_profile_name">{{profile}}</div>
+    {%endif%}
