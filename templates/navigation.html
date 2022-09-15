@@ -1,3 +1,4 @@
+<div class="topnav">
     <a href="{{ url_for('route_index') }}">Log in</a>
     <a href="{{ url_for('route_overview') }}">Overview</a>
     <a href="{{ url_for('route_ration') }}">Ration</a>
@@ -6,3 +7,4 @@
     {% if profile %}
         <div class="nav_profile_name">{{profile}}</div>
     {%endif%}
+</div>

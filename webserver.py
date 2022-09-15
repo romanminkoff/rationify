@@ -1,13 +1,14 @@
 from flask import Flask, redirect, url_for, render_template, session, request
 import uuid
 
+import ration
 import settings
 
 PORT = 50100
 app = Flask("Rationify")
+app.secret_key = uuid.uuid1().bytes
 
 def main():
-    app.secret_key = uuid.uuid1().bytes
     app.run(port=PORT)
 
 ### Main pages
@@ -35,7 +36,8 @@ def route_profile():
 @app.route("/ration", methods=["GET"])
 def route_ration():
     profile = _param(session, 'profile')
-    return render_template('ration.html', profile=profile)
+    ration = settings.get_ration(profile)
+    return render_template('ration.html', profile=profile, ration=ration)
 
 @app.route("/history", methods=["GET"])
 def route_history():
@@ -52,7 +54,6 @@ def route_create_profile():
 
 @app.route('/choose_profile', methods=['POST'])
 def route_set_profile():
-    print(request.form)
     profile = request.form['profile_name']
     if profile:
         session['profile'] = profile
@@ -63,6 +64,24 @@ def _param(session, param, default=None):
     if param in session:
         return session[param]
     return default
+
+def save_ration(profile, form):
+    item = form['new_item']
+    quantity = form['new_quantity']
+    period = form['new_period']
+    if all([item, quantity, period]):
+        ration_json = settings.get_ration(profile)
+        field = ration.field(item, quantity, period)
+        ration_json.append(field)
+        settings.store_ration(profile, ration_json)
+
+@app.route('/save_ration', methods=['POST'])
+def route_save_ration():
+    profile = _param(session, 'profile')
+    if profile:
+        save_ration(profile, request.form)
+        return redirect(url_for('route_ration'))
+    return redirect(url_for('route_index'))
 
 if __name__ == "__main__":
     main()

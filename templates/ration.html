@@ -3,5 +3,31 @@
 {% block content %}
 
     <div class="page_header">Ration</div>
+    <div>
+        <form action="/save_ration" method="POST">
+            <table class="ration_table">
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Period</th>
+                </tr>
+                <!-- rows from input ration dict -->
+                {% for row in ration %}
+                <tr>
+                    <td>{{ row['item'] }}</td>
+                    <td>{{ row['quantity'] }}</td>
+                    <td>{{ row['period'] }}</td>
+                </tr>
+                {% endfor %}
+                <!-- Last(?) line for adding a new item -->
+                <tr>
+                    <td><input type="text" id="new_item" name="new_item"></td>
+                    <td><input type="text" id="new_quantity" name="new_quantity"></td>
+                    <td><input type="text" id="new_period" name="new_period"></td>
+                </tr>
+            </table>
+            <input type="submit" name="save_ration" value="Save changes">
+        </form>
+    </div>
 
 {% endblock %}
