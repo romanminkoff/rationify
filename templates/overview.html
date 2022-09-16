@@ -3,5 +3,32 @@
 {% block content %}
 
     <div class="page_header">Overview</div>
+    <div>
+        <form action="/save_intake" method="POST">
+            <table class="ration_table">
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th>Period</th>
+                    <th>Current Intake</th>
+                </tr>
+                <!-- rows from input ration dict -->
+                {% for row in ration %}
+                <tr>
+                    <td>{{ row['item'] }}</td>
+                    <td>{{ row['quantity'] }}</td>
+                    <td>{{ row['period'] }}</td>
+                    <td>
+                        <div class="slidecontainer">
+                            <input class="slider" type="range" min="0" max="100"
+                             value="{{row['intake']}}" name="{{row['item']}}">
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            <input type="submit" value="Save changes">
+        </form>
+    </div>
 
 {% endblock %}

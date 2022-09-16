@@ -26,7 +26,8 @@ def route_root():
 @app.route("/overview", methods=["GET"])
 def route_overview():
     profile = _param(session, 'profile')
-    return render_template('overview.html', profile=profile)
+    rations = settings.get_ration(profile)
+    return render_template('overview.html', profile=profile, ration=rations)
 
 @app.route("/profile", methods=["GET"])
 def route_profile():
@@ -36,8 +37,8 @@ def route_profile():
 @app.route("/ration", methods=["GET"])
 def route_ration():
     profile = _param(session, 'profile')
-    ration = settings.get_ration(profile)
-    return render_template('ration.html', profile=profile, ration=ration)
+    rations = settings.get_ration(profile)
+    return render_template('ration.html', profile=profile, ration=rations)
 
 @app.route("/history", methods=["GET"])
 def route_history():
@@ -82,6 +83,25 @@ def route_save_ration():
         save_ration(profile, request.form)
         return redirect(url_for('route_ration'))
     return redirect(url_for('route_index'))
+
+def save_intake(profile, form):
+    intakes = form.to_dict()  # TODO: should not include diplicates!
+    if not intakes:
+        return
+    rations = settings.get_ration(profile)
+    new_rations = []
+    for d in rations:
+        _d = d.copy()
+        if _d['item'] in intakes:
+            _d['intake'] = intakes[_d['item']]
+        new_rations.append(_d)
+    settings.store_ration(profile, new_rations)
+
+@app.route('/save_intake', methods=['POST'])
+def route_save_intake():
+    profile = _param(session, 'profile')
+    save_intake(profile, request.form)
+    return redirect(url_for('route_overview'))
 
 if __name__ == "__main__":
     main()
