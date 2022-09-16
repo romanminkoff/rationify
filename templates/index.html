@@ -6,7 +6,6 @@
     
     <form action="/choose_profile" method="POST">
         <label for="profile_name">Choose profile:</label>
-        <!--input type="text" name="choose_profile" list="profile_names"-->
         <select id="profile_name" name="profile_name">
             {% for profile in profiles  %}
             <option value="{{profile}}">{{profile}}</option>
