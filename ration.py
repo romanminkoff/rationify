@@ -1,3 +1,5 @@
+periods = ['Day', 'Week']
+
 class Ration:
     def __init__(self):
         self.list = []  # [{},]

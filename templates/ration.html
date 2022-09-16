@@ -23,7 +23,13 @@
                 <tr>
                     <td><input type="text" id="new_item" name="new_item"></td>
                     <td><input type="text" id="new_quantity" name="new_quantity"></td>
-                    <td><input type="text" id="new_period" name="new_period"></td>
+                    <td>
+                        <select id="new_period" name="new_period">
+                            {% for p in periods %}
+                            <option value="{{p}}">{{p}}</option>
+                            {% endfor %}
+                        </select>
+                    </td>
                 </tr>
             </table>
             <input type="submit" value="Save changes">

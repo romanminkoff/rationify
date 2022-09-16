@@ -38,7 +38,8 @@ def route_profile():
 def route_ration():
     profile = _param(session, 'profile')
     rations = settings.get_ration(profile)
-    return render_template('ration.html', profile=profile, ration=rations)
+    return render_template('ration.html', profile=profile,
+                           ration=rations, periods=ration.periods)
 
 @app.route("/history", methods=["GET"])
 def route_history():
