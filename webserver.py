@@ -1,3 +1,4 @@
+import datetime
 from flask import Flask, redirect, url_for, render_template, session, request
 import uuid
 
@@ -11,11 +12,27 @@ app.secret_key = uuid.uuid1().bytes
 def main():
     app.run(port=PORT)
 
+class S:
+    profile = 'profile'
+    overview_date = 'overview_date'
+    target_date = 'target_date'
+
+    _date_fmt = '%Y-%m-%d'
+
+    @staticmethod
+    def date_str(year, month, day):
+        return datetime.date(year, month, day).strftime(S._date_fmt)
+
+    @staticmethod
+    def today_str():
+        return datetime.date.today().strftime(S._date_fmt)
+
+
 ### Main pages
 @app.route("/index", methods=["GET"])
 def route_index():
     """Login page"""
-    profile = _param(session, 'profile')
+    profile = _param(session, S.profile)
     profiles = settings.get_profiles()
     return render_template('index.html', profiles=profiles, profile=profile)
 
@@ -25,34 +42,39 @@ def route_root():
 
 @app.route("/overview", methods=["GET"])
 def route_overview():
-    profile = _param(session, 'profile')
+    profile = _param(session, S.profile)
     rations = settings.get_ration(profile)
-    return render_template('overview.html', profile=profile, ration=rations)
+    target_date = _param(session, S.overview_date, default=S.today_str())
+    return render_template('overview.html',
+                           profile=profile,
+                           ration=rations,
+                           target_date=target_date,
+                           today=S.today_str())
 
 @app.route("/profile", methods=["GET"])
 def route_profile():
-    profile = _param(session, 'profile')
+    profile = _param(session, S.profile)
     return render_template('profile.html', profile=profile)
 
 @app.route("/ration", methods=["GET"])
 def route_ration():
-    profile = _param(session, 'profile')
+    profile = _param(session, S.profile)
     rations = settings.get_ration(profile)
     return render_template('ration.html', profile=profile,
                            ration=rations, periods=ration.periods)
 
 @app.route("/history", methods=["GET"])
 def route_history():
-    profile = _param(session, 'profile')
+    profile = _param(session, S.profile)
     return render_template('history.html', profile=profile)
 
 ### API
 def choose_profile(profile):
-    session['profile'] = profile
+    session[S.profile] = profile
 
 @app.route('/create_profile', methods=['POST'])
 def route_create_profile():
-    profile = request.form['profile']
+    profile = request.form[S.profile]
     settings.store_profile(profile)
     choose_profile(profile)
     return redirect(url_for('route_overview'))
@@ -82,7 +104,7 @@ def save_ration(profile, form):
 
 @app.route('/save_ration', methods=['POST'])
 def route_save_ration():
-    profile = _param(session, 'profile')
+    profile = _param(session, S.profile)
     if profile:
         save_ration(profile, request.form)
         return redirect(url_for('route_ration'))
@@ -93,6 +115,7 @@ def save_intake(profile, form):
     if not intakes:
         return
     rations = settings.get_ration(profile)
+    #target_date = intakes[S.target_date]
     new_rations = []
     for d in rations:
         _d = d.copy()
@@ -103,8 +126,17 @@ def save_intake(profile, form):
 
 @app.route('/save_intake', methods=['POST'])
 def route_save_intake():
-    profile = _param(session, 'profile')
+    profile = _param(session, S.profile)
     save_intake(profile, request.form)
+    return redirect(url_for('route_overview'))
+
+def overview_choose_date(form):
+    # TODO: handle different datetime formats
+    session[S.overview_date] = form['date']
+
+@app.route('/overview_choose_date', methods=['POST'])
+def route_overview_choose_date():
+    overview_choose_date(request.form)
     return redirect(url_for('route_overview'))
 
 if __name__ == "__main__":

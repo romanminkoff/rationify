@@ -3,7 +3,22 @@
 {% block content %}
 
     <div class="page_header">Overview</div>
-    <div>
+    <!-- Current date & date picker -->
+    <div style="margin: 5px;">
+        <form action="/overview_choose_date" method="POST">
+            <label for="date">Target date:</label>
+            <input type="date" id="date" name="date" value="{{target_date}}">
+            <input type="submit" value="Change">
+
+            {% if target_date != today %}
+            <span style="margin: 5px; font-style: italic; color:darkviolet;">
+                ...............Modifying historical data.................
+            </span>
+            {% endif %}
+        </form>
+    </div>
+    <!-- Ration table -->
+    <div style="margin: 5px;">
         <form action="/save_intake" method="POST">
             <table class="ration_table">
                 <tr>
@@ -27,6 +42,7 @@
                 </tr>
                 {% endfor %}
             </table>
+            <input type="hidden" value="{{target_date}}" name="target_date">
             <input type="submit" value="Save changes">
         </form>
     </div>
