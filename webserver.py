@@ -47,18 +47,21 @@ def route_history():
     return render_template('history.html', profile=profile)
 
 ### API
+def choose_profile(profile):
+    session['profile'] = profile
+
 @app.route('/create_profile', methods=['POST'])
 def route_create_profile():
     profile = request.form['profile']
-    session['profile'] = profile
     settings.store_profile(profile)
+    choose_profile(profile)
     return redirect(url_for('route_overview'))
 
 @app.route('/choose_profile', methods=['POST'])
 def route_set_profile():
     profile = request.form['profile_name']
     if profile:
-        session['profile'] = profile
+        choose_profile(profile)
         return redirect(url_for('route_overview'))
     return redirect(url_for('route_index'))
 
