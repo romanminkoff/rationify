@@ -1,4 +1,8 @@
-periods = ['Day', 'Week']
+class Periods:
+    Day = 'Day'
+    Week = 'Week'
+
+periods = [Periods.Day, Periods.Week]
 
 class Ration:
     def __init__(self):

@@ -1,16 +1,20 @@
 import datetime
 from flask import Flask, redirect, url_for, render_template, session, request
 import uuid
+import sys
 
 import ration
 import settings
 
 PORT = 50100
-app = Flask("Rationify")
+app = Flask('Rationify')
 app.secret_key = uuid.uuid1().bytes
+s = None
 
-def main():
-    app.run(port=PORT)
+def run_server(debug=False):
+    global s
+    s = settings.Settings()
+    app.run(port=PORT, debug=debug)
 
 class S:
     profile = 'profile'
@@ -33,7 +37,7 @@ class S:
 def route_index():
     """Login page"""
     profile = _param(session, S.profile)
-    profiles = settings.get_profiles()
+    profiles = s.get_profiles()
     return render_template('index.html', profiles=profiles, profile=profile)
 
 @app.route("/", methods=["GET"])
@@ -43,7 +47,7 @@ def route_root():
 @app.route("/overview", methods=["GET"])
 def route_overview():
     profile = _param(session, S.profile)
-    rations = settings.get_ration(profile)
+    rations = s.get_ration(profile)
     target_date = _param(session, S.overview_date, default=S.today_str())
     return render_template('overview.html',
                            profile=profile,
@@ -59,7 +63,7 @@ def route_profile():
 @app.route("/ration", methods=["GET"])
 def route_ration():
     profile = _param(session, S.profile)
-    rations = settings.get_ration(profile)
+    rations = s.get_ration(profile)
     return render_template('ration.html', profile=profile,
                            ration=rations, periods=ration.periods)
 
@@ -75,7 +79,7 @@ def choose_profile(profile):
 @app.route('/create_profile', methods=['POST'])
 def route_create_profile():
     profile = request.form[S.profile]
-    settings.store_profile(profile)
+    s.store_profile(profile)
     choose_profile(profile)
     return redirect(url_for('route_overview'))
 
@@ -97,10 +101,10 @@ def save_ration(profile, form):
     quantity = form['new_quantity']
     period = form['new_period']
     if all([item, quantity, period]):
-        ration_json = settings.get_ration(profile)
+        ration_json = s.get_ration(profile)
         field = ration.field(item, quantity, period)
         ration_json.append(field)
-        settings.store_ration(profile, ration_json)
+        s.store_ration(profile, ration_json)
 
 @app.route('/save_ration', methods=['POST'])
 def route_save_ration():
@@ -114,7 +118,7 @@ def save_intake(profile, form):
     intakes = form.to_dict()  # TODO: should not include diplicates!
     if not intakes:
         return
-    rations = settings.get_ration(profile)
+    rations = s.get_ration(profile)
     #target_date = intakes[S.target_date]
     new_rations = []
     for d in rations:
@@ -122,7 +126,7 @@ def save_intake(profile, form):
         if _d['item'] in intakes:
             _d['intake'] = intakes[_d['item']]
         new_rations.append(_d)
-    settings.store_ration(profile, new_rations)
+    s.store_ration(profile, new_rations)
 
 @app.route('/save_intake', methods=['POST'])
 def route_save_intake():
@@ -140,4 +144,5 @@ def route_overview_choose_date():
     return redirect(url_for('route_overview'))
 
 if __name__ == "__main__":
-    main()
+    debug = True if 'debug' in sys.argv else False
+    run_server(debug)
