@@ -34,30 +34,34 @@ def create_profile(client, profile):
 def test_create_profile(client: FlaskClient):
     resp = create_profile(client, profile_Garderobis)
     assert profile_Garderobis in resp.data.decode()
-    
-def test_choose_profile(client: FlaskClient):
-    create_profile(client, profile_Garderobis)
     for page in ['/overview', '/index', '/ration']:
         resp_data = client.get(page, follow_redirects=True).data.decode()
         assert f'nav_profile_name">{profile_Garderobis}' in resp_data
+    
+def test_choose_profile(client: FlaskClient):
+    create_profile(client, profile_Garderobis)
+    resp_data= client.post('/choose_profile',
+        data={'profile': profile_Garderobis},
+        follow_redirects=True).data.decode()
+    assert f'nav_profile_name">{profile_Garderobis}' in resp_data
 
-def save_ration(client, data):
-    return client.post('/save_ration',
+def add_ration(client, data):
+    return client.post('/add_ration',
                        data=data,
                        follow_redirects=True).data.decode()
 
-def test_save_ration_check_overview(client: FlaskClient):
+def test_add_ration_check_overview(client: FlaskClient):
     create_profile(client, profile_Garderobis)
-    resp_data = save_ration(client, ration_data)
-    for i in ['Milk', '1 cup', ration.Periods.Week]:
+    resp_data = add_ration(client, ration_data)
+    for i in ration_data.values():  # 'Milk', '1 cup', 'Week'
         assert i in resp_data
     resp_data = client.get('/overview').data.decode()
-    for i in ['Milk', '1 cup', ration.Periods.Week]:
+    for i in ration_data.values():
         assert i in resp_data
 
 def test_save_intake(client):
     create_profile(client, profile_Garderobis)
-    save_ration(client, ration_data)
+    add_ration(client, ration_data)
     resp = client.get('/overview').data.decode()
     assert 'value="0" name="Milk"' in resp
     resp = client.post('/save_intake',
@@ -84,3 +88,10 @@ def test_param():
 
 def test_S_date_str():
     assert webserver.S.date_str(2000,1,20) == '2000-01-20'
+
+def test_last_date():
+    fmt = webserver.S._date_fmt
+    assert webserver._last_date([], fmt) == None
+    assert webserver._last_date(['2022-01-01'], fmt) == '2022-01-01'
+    d = ['2022-01-11', '2022-05-30', '2022-02-10']
+    assert webserver._last_date(d, fmt) == '2022-05-30'
