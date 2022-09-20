@@ -1,3 +1,4 @@
+import copy
 import datetime
 from flask import Flask, redirect, url_for, render_template, session, request
 import uuid
@@ -47,11 +48,12 @@ def route_root():
 @app.route("/overview", methods=["GET"])
 def route_overview():
     profile = _param(session, S.profile)
-    rations = s.get_ration(profile)
     target_date = _param(session, S.overview_date, default=S.today_str())
+    rations = s.get_ration(profile)
+    target_ration = rations.get(target_date, [])
     return render_template('overview.html',
                            profile=profile,
-                           ration=rations,
+                           ration=target_ration,
                            target_date=target_date,
                            today=S.today_str())
 
@@ -63,9 +65,11 @@ def route_profile():
 @app.route("/ration", methods=["GET"])
 def route_ration():
     profile = _param(session, S.profile)
-    rations = s.get_ration(profile)
-    return render_template('ration.html', profile=profile,
-                           ration=rations, periods=ration.periods)
+    rations = s.get_ration(profile)[S.today_str()]
+    return render_template('ration.html',
+                           profile=profile,
+                           ration=rations,
+                           periods=ration.periods)
 
 @app.route("/history", methods=["GET"])
 def route_history():
@@ -73,19 +77,39 @@ def route_history():
     return render_template('history.html', profile=profile)
 
 ### API
+def _last_date(dates, fmt):
+    def d(date):
+        return datetime.datetime.strptime(date, fmt)
+    if dates:
+        return max(d(dt) for dt in dates).strftime(fmt)
+    return None
+
+def update_todays_ration(profile):
+    today = S.today_str()
+    rations = s.get_ration(profile)
+    if not today in rations:
+        if last_date := _last_date(rations.keys(), S._date_fmt):
+            rations[today] = copy.deepcopy(rations[last_date])
+        else:
+            rations[today] = []
+    s.store_ration(profile, rations)
+
 def choose_profile(profile):
     session[S.profile] = profile
+    update_todays_ration(profile)
 
 @app.route('/create_profile', methods=['POST'])
 def route_create_profile():
-    profile = request.form[S.profile]
-    s.store_profile(profile)
-    choose_profile(profile)
-    return redirect(url_for('route_overview'))
+    profile = _param(request.form, S.profile)
+    if profile:
+        s.store_profile(profile)
+        choose_profile(profile)
+        return redirect(url_for('route_overview'))
+    return redirect(url_for('route_index'))
 
 @app.route('/choose_profile', methods=['POST'])
 def route_set_profile():
-    profile = request.form['profile_name']
+    profile = _param(request.form, S.profile)
     if profile:
         choose_profile(profile)
         return redirect(url_for('route_overview'))
@@ -96,37 +120,40 @@ def _param(session, param, default=None):
         return session[param]
     return default
 
-def save_ration(profile, form):
+def save_ration(profile, field, date):
+    # TODO: should not include duplicates
+    ration_json = s.get_ration(profile)  # {'date': {...},}
+    ration_json[date].append(field)
+    s.store_ration(profile, ration_json)
+
+def add_ration(profile, form):
     item = form['new_item']
     quantity = form['new_quantity']
     period = form['new_period']
     if all([item, quantity, period]):
-        ration_json = s.get_ration(profile)
         field = ration.field(item, quantity, period)
-        ration_json.append(field)
-        s.store_ration(profile, ration_json)
+        date = S.today_str()
+        save_ration(profile, field, date)
 
-@app.route('/save_ration', methods=['POST'])
-def route_save_ration():
+@app.route('/add_ration', methods=['POST'])
+def route_add_ration():
     profile = _param(session, S.profile)
     if profile:
-        save_ration(profile, request.form)
+        add_ration(profile, request.form)
         return redirect(url_for('route_ration'))
     return redirect(url_for('route_index'))
 
 def save_intake(profile, form):
-    intakes = form.to_dict()  # TODO: should not include diplicates!
+    intakes = form.to_dict()
+    date = intakes.pop(S.target_date)
     if not intakes:
         return
     rations = s.get_ration(profile)
-    #target_date = intakes[S.target_date]
-    new_rations = []
-    for d in rations:
-        _d = d.copy()
-        if _d['item'] in intakes:
-            _d['intake'] = intakes[_d['item']]
-        new_rations.append(_d)
-    s.store_ration(profile, new_rations)
+    if date in rations:
+        for d in rations[date]:
+            if d['item'] in intakes:
+                d['intake'] = intakes[d['item']]
+        s.store_ration(profile, rations)
 
 @app.route('/save_intake', methods=['POST'])
 def route_save_intake():
