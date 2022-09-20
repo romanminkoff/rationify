@@ -5,8 +5,8 @@
     <div class="page_header">Wellcome</div>
     
     <form action="/choose_profile" method="POST">
-        <label for="profile_name">Choose profile:</label>
-        <select id="profile_name" name="profile_name">
+        <label for="profile">Choose profile:</label>
+        <select id="profile" name="profile">
             {% for profile in profiles  %}
             <option value="{{profile}}">{{profile}}</option>
             {% endfor %}
