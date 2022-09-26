@@ -69,7 +69,7 @@ def route_ration():
     return render_template('ration.html',
                            profile=profile,
                            ration=rations,
-                           periods=ration.periods)
+                           period=ration.Periods.Week)
 
 @app.route("/history", methods=["GET"])
 def route_history():
