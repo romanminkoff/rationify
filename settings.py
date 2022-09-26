@@ -36,12 +36,12 @@ class Settings:
         s['profiles'].append(name)
         self._store_settings(s)
 
-    def get_ration(self, profile: str) -> list:
+    def get_ration(self, profile: str) -> dict:
         ration_file = self._ration_path(profile)
         if os.path.exists(ration_file):
             with open(ration_file) as f:
                 return json.load(f)
-        return []
+        return {}
 
     def store_ration(self, profile: str, ration_json: dict):
         ration_file = self._ration_path(profile)
