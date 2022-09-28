@@ -66,18 +66,18 @@ def test_save_intake(client):
     assert 'value="0" name="Milk"' in resp
     resp = client.post('/save_intake',
                        data={'Milk': 73, 
-                             'target_date': webserver.S.today_str()},
+                             'target_ww': webserver.S.current_ww_str()},
                        follow_redirects=True).data.decode()
     assert 'value="73" name="Milk"' in resp
 
 def test_overview_choose_date(client):
     resp = client.get('/overview').data.decode()
-    assert f'name="date" value="{webserver.S.today_str()}"' in resp
-    new_date = webserver.S.date_str(2022,1,1)
+    assert f'name="work_week" value="{webserver.S.current_ww_str()}"' in resp
+    new_ww = webserver.S.ww_str(2022,5)
     resp = client.post('/overview_choose_date',
-                       data={'date': new_date},
+                       data={'work_week': new_ww},
                        follow_redirects=True).data.decode()
-    assert f'name="date" value="{new_date}"' in resp
+    assert f'name="work_week" value="{new_ww}"' in resp
 
 ###
 def test_param():
@@ -86,12 +86,6 @@ def test_param():
     assert webserver._param(a, 'y') == None
     assert webserver._param(a, 'y', 4) == 4
 
-def test_S_date_str():
-    assert webserver.S.date_str(2000,1,20) == '2000-01-20'
-
-def test_last_date():
-    fmt = webserver.S._date_fmt
-    assert webserver._last_date([], fmt) == None
-    assert webserver._last_date(['2022-01-01'], fmt) == '2022-01-01'
-    d = ['2022-01-11', '2022-05-30', '2022-02-10']
-    assert webserver._last_date(d, fmt) == '2022-05-30'
+def test_last_ww():
+    fmt = webserver.S._ww_fmt
+    assert webserver._last_ww([], fmt) == None

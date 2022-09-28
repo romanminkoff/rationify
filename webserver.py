@@ -19,18 +19,18 @@ def run_server(debug=False):
 
 class S:
     profile = 'profile'
-    overview_date = 'overview_date'
-    target_date = 'target_date'
+    overview_ww = 'overview_ww'
+    target_ww = 'target_ww'
 
-    _date_fmt = '%Y-%m-%d'
-
-    @staticmethod
-    def date_str(year, month, day):
-        return datetime.date(year, month, day).strftime(S._date_fmt)
+    _ww_fmt = '%Y-W%W'
 
     @staticmethod
-    def today_str():
-        return datetime.date.today().strftime(S._date_fmt)
+    def current_ww_str():
+        return datetime.date.today().strftime(S._ww_fmt)
+
+    @staticmethod
+    def ww_str(year, ww):
+        return f'{year}-W{ww}'
 
 
 ### Main pages
@@ -48,14 +48,15 @@ def route_root():
 @app.route("/overview", methods=["GET"])
 def route_overview():
     profile = _param(session, S.profile)
-    target_date = _param(session, S.overview_date, default=S.today_str())
+    current_ww = S.current_ww_str()
+    target_ww = _param(session, S.overview_ww, default=current_ww)
     rations = s.get_ration(profile)
-    target_ration = rations.get(target_date, [])
+    target_ration = rations.get(target_ww, [])
     return render_template('overview.html',
                            profile=profile,
                            ration=target_ration,
-                           target_date=target_date,
-                           today=S.today_str())
+                           target_ww=target_ww,
+                           current_ww=current_ww)
 
 @app.route("/profile", methods=["GET"])
 def route_profile():
@@ -65,7 +66,7 @@ def route_profile():
 @app.route("/ration", methods=["GET"])
 def route_ration():
     profile = _param(session, S.profile)
-    rations = s.get_ration(profile)[S.today_str()]
+    rations = s.get_ration(profile)[S.current_ww_str()]
     return render_template('ration.html',
                            profile=profile,
                            ration=rations,
@@ -77,21 +78,21 @@ def route_history():
     return render_template('history.html', profile=profile)
 
 ### API
-def _last_date(dates, fmt):
-    def d(date):
-        return datetime.datetime.strptime(date, fmt)
-    if dates:
-        return max(d(dt) for dt in dates).strftime(fmt)
+def _last_ww(wws, fmt):
+    def d(ww):
+        return datetime.datetime.strptime(ww, fmt)
+    if wws:
+        return max(d(w) for w in wws).strftime(fmt)
     return None
 
 def update_todays_ration(profile):
-    today = S.today_str()
+    cur_ww = S.current_ww_str()
     rations = s.get_ration(profile)
-    if not today in rations:
-        if last_date := _last_date(rations.keys(), S._date_fmt):
-            rations[today] = copy.deepcopy(rations[last_date])
+    if not cur_ww in rations:
+        if last_ww := _last_ww(rations.keys(), S._ww_fmt):
+            rations[cur_ww] = copy.deepcopy(rations[last_ww])
         else:
-            rations[today] = []
+            rations[cur_ww] = []
     s.store_ration(profile, rations)
 
 def choose_profile(profile):
@@ -120,10 +121,10 @@ def _param(session, param, default=None):
         return session[param]
     return default
 
-def save_ration(profile, field, date):
+def save_ration(profile, field, ww):
     # TODO: should not include duplicates
     ration_json = s.get_ration(profile)  # {'date': {...},}
-    ration_json[date].append(field)
+    ration_json[ww].append(field)
     s.store_ration(profile, ration_json)
 
 def add_ration(profile, form):
@@ -132,8 +133,8 @@ def add_ration(profile, form):
     period = form['new_period']
     if all([item, quantity, period]):
         field = ration.field(item, quantity, period)
-        date = S.today_str()
-        save_ration(profile, field, date)
+        ww = S.current_ww_str()
+        save_ration(profile, field, ww)
 
 @app.route('/add_ration', methods=['POST'])
 def route_add_ration():
@@ -145,12 +146,12 @@ def route_add_ration():
 
 def save_intake(profile, form):
     intakes = form.to_dict()
-    date = intakes.pop(S.target_date)
+    ww = intakes.pop(S.target_ww)
     if not intakes:
         return
     rations = s.get_ration(profile)
-    if date in rations:
-        for d in rations[date]:
+    if ww in rations:
+        for d in rations[ww]:
             if d['item'] in intakes:
                 d['intake'] = intakes[d['item']]
         s.store_ration(profile, rations)
@@ -162,8 +163,7 @@ def route_save_intake():
     return redirect(url_for('route_overview'))
 
 def overview_choose_date(form):
-    # TODO: handle different datetime formats
-    session[S.overview_date] = form['date']
+    session[S.overview_ww] = form['work_week']
 
 @app.route('/overview_choose_date', methods=['POST'])
 def route_overview_choose_date():

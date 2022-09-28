@@ -3,14 +3,14 @@
 {% block content %}
 
     <div class="page_header">Overview</div>
-    <!-- Current date & date picker -->
+    <!-- Current WW picker -->
     <div style="margin: 5px;">
         <form action="/overview_choose_date" method="POST">
-            <label for="date">Target date:</label>
-            <input type="date" id="date" name="date" value="{{target_date}}">
+            <label for="week">Target date:</label>
+            <input type="week" name="work_week" value="{{target_ww}}">
             <input type="submit" value="Change">
 
-            {% if target_date != today %}
+            {% if target_ww != current_ww %}
             <span style="margin: 5px; font-style: italic; color:darkviolet;">
                 ...............Modifying historical data.................
             </span>
@@ -42,7 +42,7 @@
                 </tr>
                 {% endfor %}
             </table>
-            <input type="hidden" value="{{target_date}}" name="target_date">
+            <input type="hidden" value="{{target_ww}}" name="target_ww">
             <input type="submit" value="Save changes">
         </form>
     </div>

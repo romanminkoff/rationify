@@ -25,9 +25,7 @@
                     <td><input type="text" id="new_quantity" name="new_quantity"></td>
                     <td>
                         <select id="new_period" name="new_period">
-                            {% for p in periods %}
-                            <option value="{{p}}">{{p}}</option>
-                            {% endfor %}
+                            <option selected value="{{period}}">{{period}}</option>
                         </select>
                     </td>
                 </tr>
