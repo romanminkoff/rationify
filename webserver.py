@@ -121,11 +121,17 @@ def _param(session, param, default=None):
         return session[param]
     return default
 
+def _is_item_duplicated(item, items_lst):
+    for it in items_lst:
+        if it['item'] == item:
+            return True
+    return False
+
 def save_ration(profile, field, ww):
-    # TODO: should not include duplicates
     ration_json = s.get_ration(profile)  # {'date': {...},}
-    ration_json[ww].append(field)
-    s.store_ration(profile, ration_json)
+    if not _is_item_duplicated(field['item'], ration_json[ww]):
+        ration_json[ww].append(field)
+        s.store_ration(profile, ration_json)
 
 def add_ration(profile, form):
     item = form['new_item']

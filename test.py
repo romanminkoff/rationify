@@ -26,6 +26,11 @@ ration_data = {
     'new_quantity': '1 cup',
     'new_period': ration.Periods.Week
 }
+ration_data_duplicated = {
+    'new_item': 'Milk',
+    'new_quantity': '2 cups',
+    'new_period': ration.Periods.Week
+}
 
 def create_profile(client, profile):
     return client.post('/create_profile',
@@ -58,6 +63,12 @@ def test_add_ration_check_overview(client: FlaskClient):
     resp_data = client.get('/overview').data.decode()
     for i in ration_data.values():
         assert i in resp_data
+
+def test_add_ration_diplicated(client: FlaskClient):
+    create_profile(client, profile_Garderobis)
+    add_ration(client, ration_data)
+    resp_data = add_ration(client, ration_data_duplicated)
+    assert '2 cups' not in resp_data
 
 def test_save_intake(client):
     create_profile(client, profile_Garderobis)
