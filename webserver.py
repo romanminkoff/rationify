@@ -150,6 +150,24 @@ def route_add_ration():
         return redirect(url_for('route_ration'))
     return redirect(url_for('route_index'))
 
+def _delete_item(items, item):
+    return [d for d in items if d['item'] != item]
+
+def delete_ration(profile, form):
+    if item := form['delete_item']:
+        ration_json = s.get_ration(profile)  # {'date': {...},}
+        ww = S.current_ww_str()
+        ration_json[ww] = _delete_item(ration_json[ww], item)
+        s.store_ration(profile, ration_json)
+
+@app.route('/delete_ration', methods=['POST'])
+def route_delete_ration():
+    profile = _param(session, S.profile)
+    if profile:
+        delete_ration(profile, request.form)
+        return redirect(url_for('route_ration'))
+    return redirect(url_for('route_index'))
+
 def save_intake(profile, form):
     intakes = form.to_dict()
     ww = intakes.pop(S.target_ww)

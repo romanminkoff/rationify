@@ -59,6 +59,7 @@ body {
   border: 1px solid black;
   padding: 8px;
   width: 100%;
+  text-align: left;
 }
 
 .ration_table tr:nth-child(even) {

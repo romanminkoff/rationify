@@ -4,34 +4,55 @@
 
     <div class="page_header">Ration</div>
     <div>
-        <form action="/add_ration" method="POST">
-            <table class="ration_table">
-                <tr>
-                    <th>Item</th>
-                    <th>Quantity</th>
-                    <th>Period</th>
-                </tr>
-                <!-- rows from input ration dict -->
-                {% for row in ration %}
-                <tr>
-                    <td>{{ row['item'] }}</td>
-                    <td>{{ row['quantity'] }}</td>
-                    <td>{{ row['period'] }}</td>
-                </tr>
-                {% endfor %}
-                <!-- Last(?) line for adding a new item -->
-                <tr>
-                    <td><input type="text" id="new_item" name="new_item"></td>
-                    <td><input type="text" id="new_quantity" name="new_quantity"></td>
-                    <td>
-                        <select id="new_period" name="new_period">
-                            <option selected value="{{period}}">{{period}}</option>
-                        </select>
-                    </td>
-                </tr>
-            </table>
-            <input type="submit" value="Save changes">
-        </form>
+        <table class="ration_table">
+            <tr>
+                <th>Item</th>
+                <th>Quantity</th>
+                <th>Period</th>
+                <th></th>
+            </tr>
+            <!-- rows from input ration dict -->
+            {% for row in ration %}
+            <tr>
+                <td>{{ row['item'] }}</td>
+                <td>{{ row['quantity'] }}</td>
+                <td>{{ row['period'] }}</td>
+                <td>
+                    <div style="width: 15px;">
+                        <form action="/delete_ration" method="POST">
+                            <input type="image"
+                            src="static/bin.png"
+                            alt="Delete"
+                            width="15"
+                            height="15">
+                            <input type="hidden" name="delete_item" value="{{row['item']}}">
+                        </form>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+            <!-- Add a new item -->
+            <tr>
+                <form action="/add_ration" method="POST">
+                <td><input type="text" id="new_item" name="new_item"></td>
+                <td><input type="text" id="new_quantity" name="new_quantity"></td>
+                <td>
+                    <select id="new_period" name="new_period">
+                        <option selected value="{{period}}">{{period}}</option>
+                    </select>
+                </td>
+                <td>
+                    <div style="width: 15px;">
+                        <input type="image"
+                        src="static/add.jpg"
+                        alt="Add"
+                        width="15"
+                        height="15">
+                    </div>
+                </td>
+                </form>
+            </tr>
+        </table>
     </div>
 
 {% endblock %}

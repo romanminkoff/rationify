@@ -31,6 +31,9 @@ ration_data_duplicated = {
     'new_quantity': '2 cups',
     'new_period': ration.Periods.Week
 }
+ration_data_delete = {
+    'delete_item': 'Milk'
+}
 
 def create_profile(client, profile):
     return client.post('/create_profile',
@@ -55,6 +58,11 @@ def add_ration(client, data):
                        data=data,
                        follow_redirects=True).data.decode()
 
+def delete_ration(client, data):
+    return client.post('/delete_ration',
+                       data=data,
+                       follow_redirects=True).data.decode()
+
 def test_add_ration_check_overview(client: FlaskClient):
     create_profile(client, profile_Garderobis)
     resp_data = add_ration(client, ration_data)
@@ -69,6 +77,13 @@ def test_add_ration_diplicated(client: FlaskClient):
     add_ration(client, ration_data)
     resp_data = add_ration(client, ration_data_duplicated)
     assert '2 cups' not in resp_data
+
+def test_delete_ration(client: FlaskClient):
+    create_profile(client, profile_Garderobis)
+    resp_data = add_ration(client, ration_data)
+    assert 'Milk' in resp_data
+    resp_data = delete_ration(client, ration_data_delete)
+    assert not 'Milk' in resp_data
 
 def test_save_intake(client):
     create_profile(client, profile_Garderobis)
