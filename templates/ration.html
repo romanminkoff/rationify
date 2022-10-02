@@ -37,9 +37,8 @@
                 <td><input type="text" id="new_item" name="new_item"></td>
                 <td><input type="text" id="new_quantity" name="new_quantity"></td>
                 <td>
-                    <select id="new_period" name="new_period">
-                        <option selected value="{{period}}">{{period}}</option>
-                    </select>
+                    {{period}}
+                    <input type="hidden" name="new_period" value="{{period}}">
                 </td>
                 <td>
                     <div style="width: 15px;">
