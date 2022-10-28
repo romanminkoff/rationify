@@ -7,7 +7,7 @@ import sys
 import ration
 import settings
 
-PORT = 50100
+app_port = 80
 app = Flask('Rationify')
 app.secret_key = uuid.uuid1().bytes
 s = None
@@ -15,7 +15,8 @@ s = None
 def run_server(debug=False):
     global s
     s = settings.Settings()
-    app.run(port=PORT, debug=debug)
+    host = '127.0.0.1' if debug else '0.0.0.0'
+    app.run(port=app_port, debug=debug, host=host)
 
 class WWException(Exception):
     pass
