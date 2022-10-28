@@ -5,16 +5,16 @@ import uuid
 import sys
 
 import ration
-import settings
+import db
 
 app_port = 80
 app = Flask('Rationify')
 app.secret_key = uuid.uuid1().bytes
-s = None
+_db = None
 
 def run_server(debug=False):
-    global s
-    s = settings.Settings()
+    global _db
+    _db = db.DB()
     host = '127.0.0.1' if debug else '0.0.0.0'
     app.run(port=app_port, debug=debug, host=host)
 
@@ -68,7 +68,7 @@ class S:
 def route_index():
     """Login page"""
     profile = _param(session, S.profile)
-    profiles = s.get_profiles()
+    profiles = _db.get_profiles()
     return render_template('index.html', profiles=profiles, profile=profile)
 
 @app.route("/", methods=["GET"])
@@ -80,7 +80,7 @@ def route_overview():
     profile = _param(session, S.profile)
     current_ww = WW.current_str()
     target_ww = _param(session, S.overview_ww, default=current_ww)
-    rations = s.get_ration(profile)
+    rations = _db.get_ration(profile)
     target_ration = rations.get(target_ww, [])
     return render_template('overview.html',
                            profile=profile,
@@ -96,7 +96,7 @@ def route_profile():
 @app.route("/ration", methods=["GET"])
 def route_ration():
     profile = _param(session, S.profile)
-    rations = s.get_ration(profile)[WW.current_str()]
+    rations = _db.get_ration(profile)[WW.current_str()]
     return render_template('ration.html',
                            profile=profile,
                            ration=rations,
@@ -110,7 +110,7 @@ def route_history():
 ### API
 def update_latest_ration_data(profile):
     cur_ww = WW.current_str()
-    rations = s.get_ration(profile)
+    rations = _db.get_ration(profile)
     if not cur_ww in rations:
         if last_ww := WW.last_in(rations.keys()):
             for ww in WW.str_range(last_ww, cur_ww):
@@ -118,7 +118,7 @@ def update_latest_ration_data(profile):
                 rations[ww] = ration.reset_intake(r)
         else:
             rations[cur_ww] = []
-    s.store_ration(profile, rations)
+    _db.store_ration(profile, rations)
 
 def choose_profile(profile):  # TODO: name!
     session[S.profile] = profile
@@ -128,7 +128,7 @@ def choose_profile(profile):  # TODO: name!
 def route_create_profile():
     profile = _param(request.form, S.profile)
     if profile:
-        s.store_profile(profile)
+        _db.store_profile(profile)
         choose_profile(profile)
         return redirect(url_for('route_overview'))
     return redirect(url_for('route_index'))
@@ -153,10 +153,10 @@ def _is_item_duplicated(item, items_lst):
     return False
 
 def save_ration(profile, field, ww):
-    ration_json = s.get_ration(profile)  # {'date': {...},}
+    ration_json = _db.get_ration(profile)  # {'date': {...},}
     if not _is_item_duplicated(field['item'], ration_json[ww]):
         ration_json[ww].append(field)
-        s.store_ration(profile, ration_json)
+        _db.store_ration(profile, ration_json)
 
 def add_ration(profile, form):
     item = form['new_item']
@@ -180,10 +180,10 @@ def _delete_item(items, item):
 
 def delete_ration(profile, form):
     if item := form['delete_item']:
-        ration_json = s.get_ration(profile)  # {'date': {...},}
+        ration_json = _db.get_ration(profile)  # {'date': {...},}
         ww = WW.current_str()
         ration_json[ww] = _delete_item(ration_json[ww], item)
-        s.store_ration(profile, ration_json)
+        _db.store_ration(profile, ration_json)
 
 @app.route('/delete_ration', methods=['POST'])
 def route_delete_ration():
@@ -198,12 +198,12 @@ def save_intake(profile, form):
     ww = intakes.pop(S.target_ww)
     if not intakes:
         return
-    rations = s.get_ration(profile)
+    rations = _db.get_ration(profile)
     if ww in rations:
         for d in rations[ww]:
             if d['item'] in intakes:
                 d['intake'] = intakes[d['item']]
-        s.store_ration(profile, rations)
+        _db.store_ration(profile, rations)
 
 @app.route('/save_intake', methods=['POST'])
 def route_save_intake():

@@ -6,17 +6,17 @@ import shutil
 from flask.testing import FlaskClient
 
 import ration
-import settings
+import db
 import webserver
 
 ### Scenario tests
 @pytest.fixture()
 def client():
-    test_settings_dir = 'test_settings'
-    if os.path.exists(test_settings_dir):
-        shutil.rmtree(test_settings_dir)  # start with clean ration/profiles
+    test_db_dir = 'test_db'
+    if os.path.exists(test_db_dir):
+        shutil.rmtree(test_db_dir)  # start with clean ration/profiles
     webserver.app.testing = True
-    webserver.s = settings.Settings(root_path=test_settings_dir)
+    webserver._db = db.DB(root_path=test_db_dir)
     with webserver.app.test_client() as client:
         yield client
 
