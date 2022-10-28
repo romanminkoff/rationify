@@ -11,3 +11,8 @@ class Ration:
 def field(item, quantity, period):
     return {'item': item, 'quantity': quantity,
             'period': period, 'intake': 0}
+
+def reset_intake(items:list):
+    for item in items:
+        item['intake'] = "0"
+    return items

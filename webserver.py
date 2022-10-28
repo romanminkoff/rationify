@@ -17,20 +17,49 @@ def run_server(debug=False):
     s = settings.Settings()
     app.run(port=PORT, debug=debug)
 
+class WWException(Exception):
+    pass
+
+class WW:
+    fmt = '%Y-W%W'  # 0-53, Mon
+
+    @staticmethod
+    def to_date(ww_str):
+        fmt = WW.fmt + '-%w'  # 0-6
+        # Weekday is required to make a date.
+        # 7/Sun is better to avoid w52-w00 issue (real stuff)
+        return datetime.datetime.strptime(ww_str + '-6', fmt).date()
+
+    @staticmethod
+    def to_str(date:datetime.date):
+        return date.strftime(WW.fmt)
+
+    @staticmethod
+    def str_range(first:str, last:str):
+        d1, d2 = WW.to_date(first), WW.to_date(last)
+        if d1 > d2:
+            raise WWException('str_range call with incorrect dates')
+        ret = []
+        while d1 <= d2:
+            ret.append(WW.to_str(d1))
+            d1 = d1 + datetime.timedelta(weeks=1)
+        return ret
+
+    @staticmethod
+    def current_str():
+        return datetime.date.today().strftime(WW.fmt)
+
+    @staticmethod
+    def last_in(wws):
+        if wws:
+            return WW.to_str(max(WW.to_date(w) for w in wws))
+        return None
+
+
 class S:
     profile = 'profile'
     overview_ww = 'overview_ww'
     target_ww = 'target_ww'
-
-    _ww_fmt = '%Y-W%W'
-
-    @staticmethod
-    def current_ww_str():
-        return datetime.date.today().strftime(S._ww_fmt)
-
-    @staticmethod
-    def ww_str(year, ww):
-        return f'{year}-W{ww}'
 
 
 ### Main pages
@@ -48,7 +77,7 @@ def route_root():
 @app.route("/overview", methods=["GET"])
 def route_overview():
     profile = _param(session, S.profile)
-    current_ww = S.current_ww_str()
+    current_ww = WW.current_str()
     target_ww = _param(session, S.overview_ww, default=current_ww)
     rations = s.get_ration(profile)
     target_ration = rations.get(target_ww, [])
@@ -66,7 +95,7 @@ def route_profile():
 @app.route("/ration", methods=["GET"])
 def route_ration():
     profile = _param(session, S.profile)
-    rations = s.get_ration(profile)[S.current_ww_str()]
+    rations = s.get_ration(profile)[WW.current_str()]
     return render_template('ration.html',
                            profile=profile,
                            ration=rations,
@@ -78,26 +107,21 @@ def route_history():
     return render_template('history.html', profile=profile)
 
 ### API
-def _last_ww(wws, fmt):
-    def d(ww):
-        return datetime.datetime.strptime(ww, fmt)
-    if wws:
-        return max(d(w) for w in wws).strftime(fmt)
-    return None
-
-def update_todays_ration(profile):
-    cur_ww = S.current_ww_str()
+def update_latest_ration_data(profile):
+    cur_ww = WW.current_str()
     rations = s.get_ration(profile)
     if not cur_ww in rations:
-        if last_ww := _last_ww(rations.keys(), S._ww_fmt):
-            rations[cur_ww] = copy.deepcopy(rations[last_ww])
+        if last_ww := WW.last_in(rations.keys()):
+            for ww in WW.str_range(last_ww, cur_ww):
+                r = copy.deepcopy(rations[last_ww])
+                rations[ww] = ration.reset_intake(r)
         else:
             rations[cur_ww] = []
     s.store_ration(profile, rations)
 
-def choose_profile(profile):
+def choose_profile(profile):  # TODO: name!
     session[S.profile] = profile
-    update_todays_ration(profile)
+    update_latest_ration_data(profile)
 
 @app.route('/create_profile', methods=['POST'])
 def route_create_profile():
@@ -139,7 +163,7 @@ def add_ration(profile, form):
     period = form['new_period']
     if all([item, quantity, period]):
         field = ration.field(item, quantity, period)
-        ww = S.current_ww_str()
+        ww = WW.current_str()
         save_ration(profile, field, ww)
 
 @app.route('/add_ration', methods=['POST'])
@@ -156,7 +180,7 @@ def _delete_item(items, item):
 def delete_ration(profile, form):
     if item := form['delete_item']:
         ration_json = s.get_ration(profile)  # {'date': {...},}
-        ww = S.current_ww_str()
+        ww = WW.current_str()
         ration_json[ww] = _delete_item(ration_json[ww], item)
         s.store_ration(profile, ration_json)
 

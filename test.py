@@ -1,3 +1,4 @@
+import datetime
 import os
 import pytest
 import shutil
@@ -92,14 +93,15 @@ def test_save_intake(client):
     assert 'value="0" name="Milk"' in resp
     resp = client.post('/save_intake',
                        data={'Milk': 73, 
-                             'target_ww': webserver.S.current_ww_str()},
+                             'target_ww': webserver.WW.current_str()},
                        follow_redirects=True).data.decode()
     assert 'value="73" name="Milk"' in resp
 
 def test_overview_choose_date(client):
     resp = client.get('/overview').data.decode()
-    assert f'name="work_week" value="{webserver.S.current_ww_str()}"' in resp
-    new_ww = webserver.S.ww_str(2022,5)
+    assert f'name="work_week" value="{webserver.WW.current_str()}"' in resp
+    to_str = webserver.WW.to_str
+    new_ww = to_str(datetime.date(2022,5,20))
     resp = client.post('/overview_choose_date',
                        data={'work_week': new_ww},
                        follow_redirects=True).data.decode()
@@ -112,6 +114,40 @@ def test_param():
     assert webserver._param(a, 'y') == None
     assert webserver._param(a, 'y', 4) == 4
 
-def test_last_ww():
-    fmt = webserver.S._ww_fmt
-    assert webserver._last_ww([], fmt) == None
+def test_WW_last_in():
+    last_in = webserver.WW.last_in
+    assert last_in([]) == None
+    assert last_in(['2022-W20']) == '2022-W20'
+    assert last_in(['2022-W18', '2022-W20', '2022-W19']) == '2022-W20'
+
+def test_WW_to_str_to_date():
+    to_str = webserver.WW.to_str
+    to_date = webserver.WW.to_date
+    d = datetime.date(2022,1,20)  # W3
+    d_str = to_str(d)
+    d_date = to_date(d_str)
+    assert to_str(d_date)=='2022-W03'
+
+def test_WW_str_range():
+    r = webserver.WW.str_range
+    assert r('2022-W0','2022-W0') == ['2022-W00']
+    assert r('2022-W0','2022-W1') == ['2022-W00','2022-W01']
+    assert r('2022-W9','2022-W11') == ['2022-W09','2022-W10','2022-W11']
+    assert r('2021-W51','2022-W1') == ['2021-W51','2022-W00','2022-W01']
+    with pytest.raises(webserver.WWException):
+        r('2022-W6','2022-W4')
+    with pytest.raises(ValueError):
+        r('2022-W60', '2022-W60')
+
+
+# ration
+def test_ration_reset_intake():
+    r = [
+        {"item": "A", "quantity": "5", "period": "Week", "intake": "53"},
+        {"item": "B", "quantity": "200 gr.", "period": "Week", "intake": "9"}
+    ]
+    r_clean_intake = [
+        {"item": "A", "quantity": "5", "period": "Week", "intake": "0"},
+        {"item": "B", "quantity": "200 gr.", "period": "Week", "intake": "0"}
+    ]
+    assert ration.reset_intake(r) == r_clean_intake
