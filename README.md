@@ -7,3 +7,7 @@ One of the behavioural modification techniques requires a person to keep track o
 - Open a web page using IP printed out by the app. (TIP: modify hosts file to simplify access, %SystemRoot%\System32\drivers\etc\hosts)
 - Create a new profile and fill the “Ration” page with things you’d like to track.
 - “Overview” page allows you to modify the current status of meals intake.
+
+<b>Tech stuff</b>
+- Flask for web, html templates and css (note: built-in development server is used for deployment)
+- DB uses json for simplicity
